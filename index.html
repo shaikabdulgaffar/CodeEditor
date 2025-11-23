@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Make it WebView / PWA friendly -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f172a">
+  <title>OnCodeEditor | HTML/CSS/JS Editor</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Font Awesome (you can bundle this locally for offline) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <div class="logo" style="text-decoration: none; color: inherit;">
+        <i class="fa-solid fa-code logo-icon" aria-hidden="true"></i>
+        <span>OnCodeEditor</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="controls" role="group" aria-label="Header controls">
+        <div class="toggle-icon" id="darkModeToggle" title="Toggle Dark/Light Mode" role="button" tabindex="0" aria-label="Toggle theme">
+          <i id="themeIcon" class="fa-solid fa-sun icon"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="container">
+      <!-- Code Panel -->
+      <div class="panel" id="codePanel">
+        <div class="top-bar">
+          <div class="code-tabs">
+            <div class="code-tab active" onclick="switchTab('html')">HTML</div>
+            <div class="code-tab" onclick="switchTab('css')">CSS</div>
+            <div class="code-tab" onclick="switchTab('js')">JavaScript</div>
+          </div>
+          <div class="button-group">
+            <button class="run" onclick="runCode()" title="Run Code (Ctrl+Enter)">
+              <i class="fa-solid fa-play icon" style="margin-right: 6px;"></i>
+              Run
+            </button>
+            <button class="copy" onclick="copyCode()" title="Copy Code">
+              <i class="fa-solid fa-copy icon" style="margin-right: 6px;"></i>
+              Copy
+            </button>
+          </div>
+        </div>
+        <div class="editor-container">
+          <div class="line-numbers" id="html-line-numbers">1</div>
+          <textarea id="html-code" class="editor code-block active" spellcheck="false" inputmode="text" autocomplete="off" placeholder="<!-- Write your HTML code here -->
+<h1>Hello, World!</h1>"></textarea>
+          
+          <div class="line-numbers" id="css-line-numbers" style="display: none">1</div>
+          <textarea id="css-code" class="editor code-block" spellcheck="false" inputmode="text" autocomplete="off" style="display: none" placeholder="/* Write your CSS code here */
+body {
+  background: #1e293b;
+  color: white;
+}"></textarea>
+          
+          <div class="line-numbers" id="js-line-numbers" style="display: none">1</div>
+          <textarea id="js-code" class="editor code-block" spellcheck="false" inputmode="text" autocomplete="off" style="display: none" placeholder="// Write your JavaScript code here
+console.log('Hello from JavaScript!');"></textarea>
+        </div>
+      </div>
+
+      <!-- Resizer Divider (hidden for mobile/webview) -->
+      <div class="resizer" id="dragbar" aria-hidden="true"></div>
+
+      <!-- Output Panel -->
+      <div class="output-panel" id="outputPanel">
+        <div class="top-bar">
+          <div class="file-label">
+            <i class="fa-regular fa-file icon" style="margin-right:8px;"></i>
+            Output
+          </div>
+          <div class="button-group">
+            <button class="clear" onclick="clearOutput()" title="Clear Output">
+              <i class="fa-solid fa-trash icon" style="margin-right: 6px;"></i>
+              Clear
+            </button>
+            <!-- Open in new tab button -->
+            <button class="open" onclick="openInNewTab()" title="Open Output in New Tab">
+              <i class="fa-solid fa-up-right-from-square icon" style="margin-right: 6px;"></i>
+              Open
+            </button>
+          </div>
+        </div>
+        <div class="output-area">
+          <iframe id="output" allow="clipboard-read; clipboard-write"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-left">
+        <div class="status-item">
+          <span>Lines: </span>
+          <span id="lineCount">1</span>
+        </div>
+        <div class="status-item">
+          <span>Characters: </span>
+          <span id="charCount">0</span>
+        </div>
+      </div>
+      <div class="status-right">
+        <div class="status-item">
+          ✓ Ready
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

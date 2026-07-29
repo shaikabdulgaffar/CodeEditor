@@ -30,6 +30,9 @@
         <button class="mode-tab" data-mode="sql" role="tab" aria-selected="false" type="button">
           <i class="fa-solid fa-database" aria-hidden="true"></i><span class="mode-label">SQL</span>
         </button>
+        <button class="mode-tab" data-mode="data" role="tab" aria-selected="false" type="button">
+          <i class="fa-solid fa-chart-line" aria-hidden="true"></i><span class="mode-label">Data</span>
+        </button>
       </div>
 
       <!-- Project Name Display -->
@@ -218,6 +221,11 @@ console.log('Hello from JavaScript!');"></textarea>
     <!-- Markup for this panel is injected by sqleditor.js -->
     <!-- ===== END SQL MODE ===== -->
 
+    <!-- ===== DATA ANALYSIS MODE ===== -->
+    <div class="mode-panel" id="dataModePanel" hidden></div>
+    <!-- Markup for this panel is injected by dataeditor.js -->
+    <!-- ===== END DATA ANALYSIS MODE ===== -->
+
   </div>
 
   <!-- Projects Modal -->
@@ -254,7 +262,7 @@ console.log('Hello from JavaScript!');"></textarea>
       <div class="modal-body">
         <div class="shortcuts-grid">
           <div class="shortcut-row"><span>Save project</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>S</kbd></span></div>
-          <div class="shortcut-row"><span>Run Python / SQL</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span></div>
+          <div class="shortcut-row"><span>Run Python / SQL / Data</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span></div>
           <div class="shortcut-row"><span>Find &amp; Replace</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>F</kbd></span></div>
           <div class="shortcut-row"><span>Indent selection</span><span class="shortcut-keys"><kbd>Tab</kbd></span></div>
           <div class="shortcut-row"><span>Next tab / editor</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Tab</kbd></span></div>
@@ -269,5 +277,6 @@ console.log('Hello from JavaScript!');"></textarea>
   <script src="script.js"></script>
   <script src="pyeditor.js"></script>
   <script src="sqleditor.js"></script>
+  <script src="dataeditor.js"></script>
 </body>
 </html>

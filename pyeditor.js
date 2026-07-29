@@ -124,7 +124,7 @@ print('Hello, World!')"></textarea>
   let pyEditorHandle = null;
   if (pythonCode) {
     pythonCode.value = `# Write your Python code here\nname = "World"\nprint(f"Hello, {name}!")\n\nfor i in range(5):\n    print(i, i * i)\n`;
-    pyEditorHandle = setupSimpleEditor({
+    pyEditorHandle = window.pyEditorHandle = setupSimpleEditor({
       textarea: pythonCode,
       lineNumbers: pyLineNumbers,
       activeLineEl: pyActiveLine,

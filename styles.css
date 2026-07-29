@@ -150,6 +150,8 @@
     .mode-tab[data-mode="python"].active i { color: #ffe873; }
     .mode-tab[data-mode="sql"] i { color: #4fc3f7; }
     .mode-tab[data-mode="sql"].active i { color: white; }
+    .mode-tab[data-mode="data"] i { color: #a78bfa; }
+    .mode-tab[data-mode="data"].active i { color: white; }
 
     .controls {
       display: flex;

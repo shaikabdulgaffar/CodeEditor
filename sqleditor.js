@@ -205,12 +205,12 @@
   const sqlLineCountEl = document.getElementById('sqlLineCount');
   const sqlCharCountEl = document.getElementById('sqlCharCount');
 
-  const SQL_SAMPLE_QUERY = `SELECT * FROM employees\nORDER BY salary DESC;`;
+  const SQL_SAMPLE_QUERY = window.SQL_SAMPLE_QUERY = `SELECT * FROM employees\nORDER BY salary DESC;`;
 
   let sqlEditorHandle = null;
   if (sqlCode) {
     sqlCode.value = SQL_SAMPLE_QUERY;
-    sqlEditorHandle = setupSimpleEditor({
+    sqlEditorHandle = window.sqlEditorHandle = setupSimpleEditor({
       textarea: sqlCode,
       lineNumbers: sqlLineNumbers,
       activeLineEl: sqlActiveLine,

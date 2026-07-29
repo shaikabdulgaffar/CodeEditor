@@ -18,10 +18,47 @@
         <i class="fa-solid fa-code logo-icon" aria-hidden="true"></i>
         <span>OnCodeEditor</span>
       </div>
+
+      <!-- Mode Switcher -->
+      <div class="mode-switcher" role="tablist" aria-label="Editor mode">
+        <button class="mode-tab active" data-mode="web" role="tab" aria-selected="true" type="button">
+          <i class="fa-solid fa-globe" aria-hidden="true"></i><span class="mode-label">Web</span>
+        </button>
+        <button class="mode-tab" data-mode="python" role="tab" aria-selected="false" type="button">
+          <i class="fa-brands fa-python" aria-hidden="true"></i><span class="mode-label">Python</span>
+        </button>
+        <button class="mode-tab" data-mode="sql" role="tab" aria-selected="false" type="button">
+          <i class="fa-solid fa-database" aria-hidden="true"></i><span class="mode-label">SQL</span>
+        </button>
+      </div>
+
+      <!-- Project Name Display -->
+      <div class="project-title">
+        <i class="fa-solid fa-folder-open" style="margin-right: 8px;"></i>
+        <span id="projectTitle">Untitled Project</span>
+        <span id="unsavedDot" class="unsaved-dot" title="Unsaved changes" aria-hidden="true"></span>
+      </div>
     </div>
 
     <div class="header-right">
       <div class="controls" role="group" aria-label="Header controls">
+        <!-- Project Management Buttons -->
+        <button class="project-btn" onclick="createNewProject()" title="Create New Project" type="button">
+          <i class="fa-solid fa-plus icon"></i>
+          <span class="btn-text">New</span>
+        </button>
+        <button class="project-btn" onclick="showProjectsModal()" title="Open Project" type="button">
+          <i class="fa-solid fa-folder-open icon"></i>
+          <span class="btn-text">Open</span>
+        </button>
+        <button class="project-btn" onclick="saveCurrentProject()" title="Save Project (Ctrl+S)" type="button">
+          <i class="fa-solid fa-floppy-disk icon"></i>
+          <span class="btn-text">Save</span>
+        </button>
+        <button class="project-btn" onclick="showShortcutsModal()" title="Keyboard Shortcuts (?)" type="button">
+          <i class="fa-solid fa-keyboard icon"></i>
+        </button>
+
         <div class="toggle-icon" id="darkModeToggle" title="Toggle Dark/Light Mode" role="button" tabindex="0" aria-label="Toggle theme">
           <i id="themeIcon" class="fa-solid fa-sun icon"></i>
         </div>
@@ -30,41 +67,77 @@
   </header>
 
   <div class="main-container">
+    <!-- ===== WEB PROJECT MODE ===== -->
+    <div class="mode-panel active" id="webModePanel">
     <div class="container">
       <!-- Code Panel -->
       <div class="panel" id="codePanel">
         <div class="top-bar">
-          <div class="code-tabs">
-            <div class="code-tab active" onclick="switchTab('html')">HTML</div>
-            <div class="code-tab" onclick="switchTab('css')">CSS</div>
-            <div class="code-tab" onclick="switchTab('js')">JavaScript</div>
+          <div class="code-tabs" role="tablist" aria-label="Code editors">
+            <button class="code-tab active" data-tab="html" role="tab" aria-selected="true" aria-controls="html-code">
+              <i class="fa-brands fa-html5 tab-icon" aria-hidden="true"></i>HTML
+            </button>
+            <button class="code-tab" data-tab="css" role="tab" aria-selected="false" aria-controls="css-code">
+              <i class="fa-brands fa-css3-alt tab-icon" aria-hidden="true"></i>CSS
+            </button>
+            <button class="code-tab" data-tab="js" role="tab" aria-selected="false" aria-controls="js-code">
+              <i class="fa-brands fa-js tab-icon" aria-hidden="true"></i>JavaScript
+            </button>
           </div>
           <div class="button-group">
-            <button class="run" onclick="runCode()" title="Run Code (Ctrl+Enter)">
-              <i class="fa-solid fa-play icon" style="margin-right: 6px;"></i>
-              Run
+            <button type="button" class="icon-btn" onclick="clearCurrentCode()" title="Clear Code">
+              <i class="fa-solid fa-trash icon"></i>
+              <span class="btn-text">Clear</span>
             </button>
-            <button class="copy" onclick="copyCode()" title="Copy Code">
+            <button type="button" class="icon-btn" onclick="toggleFindReplace()" title="Find & Replace (Ctrl+F)">
+              <i class="fa-solid fa-magnifying-glass icon"></i>
+              <span class="btn-text">Find</span>
+            </button>
+            <button type="button" class="copy" onclick="copyCode()" title="Copy Code">
               <i class="fa-solid fa-copy icon" style="margin-right: 6px;"></i>
               Copy
             </button>
           </div>
         </div>
+
+        <!-- Find & Replace bar -->
+        <div class="find-bar" id="findBar" hidden>
+          <i class="fa-solid fa-magnifying-glass find-icon" aria-hidden="true"></i>
+          <input type="text" id="findInput" class="find-input" placeholder="Find" autocomplete="off" spellcheck="false">
+          <span class="find-count" id="findCount">0/0</span>
+          <button type="button" class="find-btn" id="findPrev" title="Previous match (Shift+Enter)"><i class="fa-solid fa-chevron-up"></i></button>
+          <button type="button" class="find-btn" id="findNext" title="Next match (Enter)"><i class="fa-solid fa-chevron-down"></i></button>
+          <span class="find-divider"></span>
+          <input type="text" id="replaceInput" class="find-input" placeholder="Replace" autocomplete="off" spellcheck="false">
+          <button type="button" class="find-btn find-text-btn" id="replaceOne">Replace</button>
+          <button type="button" class="find-btn find-text-btn" id="replaceAll">All</button>
+          <button type="button" class="find-btn" id="findClose" title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
         <div class="editor-container">
           <div class="line-numbers" id="html-line-numbers">1</div>
-          <textarea id="html-code" class="editor code-block active" spellcheck="false" inputmode="text" autocomplete="off" placeholder="<!-- Write your HTML code here -->
+          <div class="code-block active" id="html-block">
+            <div class="active-line-bg" id="html-active-line"></div>
+            <textarea id="html-code" class="editor" spellcheck="false" inputmode="text" autocomplete="off" placeholder="<!-- Write your HTML code here -->
 <h1>Hello, World!</h1>"></textarea>
-          
+          </div>
+
           <div class="line-numbers" id="css-line-numbers" style="display: none">1</div>
-          <textarea id="css-code" class="editor code-block" spellcheck="false" inputmode="text" autocomplete="off" style="display: none" placeholder="/* Write your CSS code here */
+          <div class="code-block" id="css-block" style="display:none">
+            <div class="active-line-bg" id="css-active-line"></div>
+            <textarea id="css-code" class="editor" spellcheck="false" inputmode="text" autocomplete="off" placeholder="/* Write your CSS code here */
 body {
   background: #1e293b;
   color: white;
 }"></textarea>
-          
+          </div>
+
           <div class="line-numbers" id="js-line-numbers" style="display: none">1</div>
-          <textarea id="js-code" class="editor code-block" spellcheck="false" inputmode="text" autocomplete="off" style="display: none" placeholder="// Write your JavaScript code here
+          <div class="code-block" id="js-block" style="display:none">
+            <div class="active-line-bg" id="js-active-line"></div>
+            <textarea id="js-code" class="editor" spellcheck="false" inputmode="text" autocomplete="off" placeholder="// Write your JavaScript code here
 console.log('Hello from JavaScript!');"></textarea>
+          </div>
         </div>
       </div>
 
@@ -74,28 +147,47 @@ console.log('Hello from JavaScript!');"></textarea>
       <!-- Output Panel -->
       <div class="output-panel" id="outputPanel">
         <div class="top-bar">
-          <div class="file-label">
-            <i class="fa-regular fa-file icon" style="margin-right:8px;"></i>
-            Output
-          </div>
-          <div class="button-group">
-            <button class="clear" onclick="clearOutput()" title="Clear Output">
-              <i class="fa-solid fa-trash icon" style="margin-right: 6px;"></i>
-              Clear
+          <div class="output-tabs" role="tablist" aria-label="Output views">
+            <button class="output-tab active" data-view="preview" role="tab" aria-selected="true" type="button">
+              <i class="fa-regular fa-eye" aria-hidden="true"></i> Preview
             </button>
-            <!-- Open in new tab button -->
-            <button class="open" onclick="openInNewTab()" title="Open Output in New Tab">
+            <button class="output-tab" data-view="console" role="tab" aria-selected="false" type="button">
+              <i class="fa-solid fa-terminal" aria-hidden="true"></i> Console
+              <span class="console-badge" id="consoleBadge" hidden>0</span>
+            </button>
+          </div>
+
+          <div class="button-group">
+            <button class="clear" onclick="clearOutput()" title="Clear Output" type="button">
+              <i class="fa-solid fa-trash icon" style="margin-right: 6px;"></i>
+              <span class="btn-text">Clear</span>
+            </button>
+            <button class="download" onclick="downloadCode()" title="Download as HTML file" type="button">
+              <i class="fa-solid fa-download icon" style="margin-right: 6px;"></i>
+              <span class="btn-text">Download</span>
+            </button>
+            <button class="open" onclick="openInNewTab()" title="Open Output in New Tab" type="button">
               <i class="fa-solid fa-up-right-from-square icon" style="margin-right: 6px;"></i>
-              Open
+              <span class="btn-text">Open</span>
             </button>
           </div>
         </div>
-        <div class="output-area">
-          <iframe id="output" allow="clipboard-read; clipboard-write"></iframe>
+        <div class="output-area" id="previewView">
+          <div id="previewWrapper" class="preview-wrapper">
+            <iframe id="output" allow="clipboard-read; clipboard-write" sandbox="allow-scripts allow-modals allow-forms allow-popups allow-same-origin"></iframe>
+          </div>
+        </div>
+        <div class="console-area" id="consoleView" hidden>
+          <div class="console-toolbar">
+            <span class="console-hint"><i class="fa-solid fa-circle-info"></i> Logs from your JS show up here</span>
+            <button type="button" class="console-clear-btn" id="consoleClearBtn" title="Clear console">
+              <i class="fa-solid fa-ban"></i> Clear
+            </button>
+          </div>
+          <div class="console-log-list" id="consoleLogList"></div>
         </div>
       </div>
     </div>
-
     <div class="status-bar">
       <div class="status-left">
         <div class="status-item">
@@ -108,13 +200,74 @@ console.log('Hello from JavaScript!');"></textarea>
         </div>
       </div>
       <div class="status-right">
-        <div class="status-item">
-          ✓ Ready
+        <div class="status-item" id="autoSaveStatus">
+          <i class="fa-solid fa-check"></i> Saved
+        </div>
+      </div>
+    </div>
+    </div>
+    <!-- ===== END WEB PROJECT MODE ===== -->
+
+    <!-- ===== PYTHON MODE ===== -->
+    <div class="mode-panel" id="pythonModePanel" hidden></div>
+    <!-- Markup for this panel is injected by pyeditor.js -->
+    <!-- ===== END PYTHON MODE ===== -->
+
+    <!-- ===== SQL MODE ===== -->
+    <div class="mode-panel" id="sqlModePanel" hidden></div>
+    <!-- Markup for this panel is injected by sqleditor.js -->
+    <!-- ===== END SQL MODE ===== -->
+
+  </div>
+
+  <!-- Projects Modal -->
+  <div id="projectsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <i class="fa-solid fa-folder-open" style="margin-right: 8px;"></i>
+          Open Project
+        </h2>
+        <button class="close-btn" onclick="closeProjectModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="projectSearch" class="project-search" placeholder="Search projects..." autocomplete="off">
+        <div id="projectsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shortcuts Modal -->
+  <div id="shortcutsModal" class="modal">
+    <div class="modal-content shortcuts-content">
+      <div class="modal-header">
+        <h2>
+          <i class="fa-solid fa-keyboard" style="margin-right: 8px;"></i>
+          Keyboard Shortcuts
+        </h2>
+        <button class="close-btn" onclick="closeShortcutsModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcuts-grid">
+          <div class="shortcut-row"><span>Save project</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>S</kbd></span></div>
+          <div class="shortcut-row"><span>Run Python / SQL</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span></div>
+          <div class="shortcut-row"><span>Find &amp; Replace</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>F</kbd></span></div>
+          <div class="shortcut-row"><span>Indent selection</span><span class="shortcut-keys"><kbd>Tab</kbd></span></div>
+          <div class="shortcut-row"><span>Next tab / editor</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Tab</kbd></span></div>
+          <div class="shortcut-row"><span>Clear output</span><span class="shortcut-keys"><kbd>Esc</kbd></span></div>
+          <div class="shortcut-row"><span>Toggle fullscreen</span><span class="shortcut-keys"><kbd>F11</kbd></span></div>
+          <div class="shortcut-row"><span>Show this dialog</span><span class="shortcut-keys"><kbd>?</kbd></span></div>
         </div>
       </div>
     </div>
   </div>
 
   <script src="script.js"></script>
+  <script src="pyeditor.js"></script>
+  <script src="sqleditor.js"></script>
 </body>
 </html>

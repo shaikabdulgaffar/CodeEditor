@@ -225,6 +225,18 @@
     sqlCharCountEl.textContent = sqlCode.value.length;
   }
 
+  // ---- 3b. Resizer between the code panel and the output panel ----
+  // setupPanelResizer is defined in script.js (loaded before this file);
+  // each mode wires its own dragbar/panels once its markup exists.
+  const sqlResizerHandle = window.sqlResizerHandle = typeof setupPanelResizer === 'function'
+    ? setupPanelResizer({
+        dragbar: document.getElementById('dragbarSql'),
+        leftPanel: document.getElementById('sqlPanel'),
+        rightPanel: document.getElementById('sqlOutputPanel'),
+        container: document.querySelector('#sqlModePanel .container')
+      })
+    : null;
+
   // Clear the SQL code editor (with confirmation)
   window.clearSQLCode = function clearSQLCode() {
     if (!sqlCode.value) {
@@ -452,5 +464,6 @@ INSERT INTO employees (name, department, salary, hired_on) VALUES
   window.onSqlModeActivated = function onSqlModeActivated() {
     ensureSqlJsLoaded();
     sqlEditorHandle && sqlEditorHandle.refresh();
+    sqlResizerHandle && sqlResizerHandle.refresh();
   };
 })();

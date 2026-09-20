@@ -83,7 +83,6 @@ function saveCurrentProject() {
     js: jsCode.value,
     python: document.getElementById('python-code') ? document.getElementById('python-code').value : '',
     sql: document.getElementById('sql-code') ? document.getElementById('sql-code').value : '',
-    data: document.getElementById('data-code') ? document.getElementById('data-code').value : '',
     lastModified: new Date().toISOString()
   };
   
@@ -128,10 +127,6 @@ function createNewProject() {
     document.getElementById('sql-code').value = SQL_SAMPLE_QUERY;
     sqlEditorHandle && sqlEditorHandle.refresh();
   }
-  if (document.getElementById('data-code')) {
-    document.getElementById('data-code').value = DATA_STARTER_CODE;
-    dataEditorHandle && dataEditorHandle.refresh();
-  }
   
   // Set as current project
   setCurrentProject(trimmedName);
@@ -170,10 +165,6 @@ function loadProject(projectName) {
   if (document.getElementById('sql-code')) {
     document.getElementById('sql-code').value = project.sql || SQL_SAMPLE_QUERY;
     sqlEditorHandle && sqlEditorHandle.refresh();
-  }
-  if (document.getElementById('data-code')) {
-    document.getElementById('data-code').value = project.data || DATA_STARTER_CODE;
-    dataEditorHandle && dataEditorHandle.refresh();
   }
   
   setCurrentProject(projectName);
@@ -707,8 +698,6 @@ function copyCode() {
     codeToCopy = document.getElementById('python-code').value;
   } else if (typeof currentMode !== 'undefined' && currentMode === 'sql') {
     codeToCopy = document.getElementById('sql-code').value;
-  } else if (typeof currentMode !== 'undefined' && currentMode === 'data') {
-    codeToCopy = document.getElementById('data-code').value;
   } else if (currentTab === 'html') {
     codeToCopy = htmlCode.value;
   } else if (currentTab === 'css') {
@@ -1243,146 +1232,191 @@ setupLineNumbers(jsCode, jsLineNumbers, 'js');
 
 
 // Resizer Functionality (robust across screen sizes/orientation)
-const dragbar = document.getElementById("dragbar");
-const leftPanel = document.getElementById("codePanel");
-const rightPanel = document.getElementById("outputPanel");
-const container = document.querySelector(".container");
-
-let isResizing = false;
-let activePointerId = null;
-let splitRatio = 0.5; // proportion of primary panel along current axis
+//
+// This used to be wired up once, by id, only for the Web Project mode's
+// panels (#dragbar / #codePanel / #outputPanel) — so the divider in the
+// Python and SQL tabs (#dragbarPy / #dragbarSql) rendered but had no drag
+// behavior attached to it at all. It's now a reusable factory: each mode
+// calls setupPanelResizer() for its own dragbar/panels once its markup
+// exists (Python/SQL panels are injected later by pyeditor.js/sqleditor.js,
+// after this file has already run and defined the factory below).
 const RESIZER_SIZE = 4;
 const MIN_DESKTOP = 300; // px (row layout)
 const MIN_MOBILE = 200;  // px (column layout)
 
-// Determine actual current axis from CSS (row/column)
-function isColumnLayout() {
-  const fd = getComputedStyle(container).flexDirection;
-  return fd === 'column';
-}
+function setupPanelResizer({ dragbar, leftPanel, rightPanel, container }) {
+  if (!dragbar || !leftPanel || !rightPanel || !container) return null;
 
-function setIframeInteractive(enable) {
-  const iframe = document.getElementById('output');
-  if (iframe) iframe.style.pointerEvents = enable ? 'auto' : 'none';
-}
+  let isResizing = false;
+  let activePointerId = null;
+  let splitRatio = 0.5; // proportion of primary panel along current axis
 
-// Sum margins along the active axis so clamping uses usable space accurately
-function getAxisMarginsSum(column) {
-  const l = getComputedStyle(leftPanel);
-  const r = getComputedStyle(rightPanel);
-  const n = (v) => Number.parseFloat(v) || 0;
-  if (column) {
-    return n(l.marginTop) + n(l.marginBottom) + n(r.marginTop) + n(r.marginBottom);
-  } else {
-    return n(l.marginLeft) + n(l.marginRight) + n(r.marginLeft) + n(r.marginRight);
+  // Determine actual current axis from CSS (row/column)
+  function isColumnLayout() {
+    return getComputedStyle(container).flexDirection === 'column';
   }
-}
 
-function clamp(v, min, max) {
-  return Math.min(max, Math.max(min, v));
-}
-
-function applySplitRatio() {
-  const rect = container.getBoundingClientRect();
-  const column = isColumnLayout();
-  const total = column ? rect.height : rect.width;
-  const margins = getAxisMarginsSum(column);
-  const usable = Math.max(0, total - RESIZER_SIZE - margins);
-  const minPrimary = column ? MIN_MOBILE : MIN_DESKTOP;
-
-  // Convert ratio -> pixels and clamp so both sides keep minimum size
-  const primaryPx = clamp(Math.round(usable * splitRatio), minPrimary, Math.max(minPrimary, usable - minPrimary));
-  const secondaryPx = Math.max(0, usable - primaryPx);
-
-  leftPanel.style.flex = `0 0 ${primaryPx}px`;
-  rightPanel.style.flex = `0 0 ${secondaryPx}px`;
-}
-
-function updateSplitFromPixels(primaryPx, totalUsable) {
-  splitRatio = clamp(primaryPx / Math.max(1, totalUsable), 0.1, 0.9);
-}
-
-dragbar.addEventListener('pointerdown', (e) => {
-  e.preventDefault();
-  isResizing = true;
-  activePointerId = e.pointerId;
-  dragbar.setPointerCapture(activePointerId);
-  dragbar.classList.add('dragging');
-  document.body.style.userSelect = 'none';
-  const column = isColumnLayout();
-  document.body.style.cursor = column ? "row-resize" : "col-resize";
-  dragbar.style.cursor = column ? "row-resize" : "col-resize";
-  setIframeInteractive(false);
-});
-
-dragbar.addEventListener('pointermove', (e) => {
-  if (!isResizing) return;
-
-  const rect = container.getBoundingClientRect();
-  const column = isColumnLayout();
-  const total = column ? rect.height : rect.width;
-  const margins = getAxisMarginsSum(column);
-  const usable = Math.max(0, total - RESIZER_SIZE - margins);
-  const minPrimary = column ? MIN_MOBILE : MIN_DESKTOP;
-
-  const lpStyle = getComputedStyle(leftPanel);
-  const leadMargin = column
-    ? (Number.parseFloat(lpStyle.marginTop) || 0)
-    : (Number.parseFloat(lpStyle.marginLeft) || 0);
-
-  const pointer = column
-    ? (e.clientY - rect.top)
-    : (e.clientX - rect.left);
-
-  // Translate pointer position to primary panel inner size (exclude leading margin and half resizer)
-  let primaryPx = pointer - leadMargin - (RESIZER_SIZE / 2);
-  primaryPx = clamp(primaryPx, minPrimary, Math.max(minPrimary, usable - minPrimary));
-
-  const secondaryPx = Math.max(0, usable - primaryPx);
-
-  leftPanel.style.flex = `0 0 ${primaryPx}px`;
-  rightPanel.style.flex = `0 0 ${secondaryPx}px`;
-
-  updateSplitFromPixels(primaryPx, usable);
-});
-
-function stopResize() {
-  if (!isResizing) return;
-  isResizing = false;
-  if (activePointerId !== null && dragbar.releasePointerCapture) {
-    dragbar.releasePointerCapture(activePointerId);
+  // Only the Web Project mode has a live iframe to disable pointer events on
+  // mid-drag (so dragging doesn't get swallowed by the preview); a no-op
+  // elsewhere since Python/SQL panels don't contain one.
+  function setIframeInteractive(enable) {
+    const iframe = leftPanel.querySelector('iframe') || rightPanel.querySelector('iframe');
+    if (iframe) iframe.style.pointerEvents = enable ? 'auto' : 'none';
   }
-  activePointerId = null;
-  dragbar.classList.remove('dragging');
-  document.body.style.cursor = "";
-  dragbar.style.cursor = "";
-  document.body.style.userSelect = "";
-  setIframeInteractive(true);
-}
 
-dragbar.addEventListener('pointerup', stopResize);
-dragbar.addEventListener('pointercancel', stopResize);
-document.addEventListener('pointerup', stopResize);
+  // Sum margins along the active axis so clamping uses usable space accurately
+  function getAxisMarginsSum(column) {
+    const l = getComputedStyle(leftPanel);
+    const r = getComputedStyle(rightPanel);
+    const n = (v) => Number.parseFloat(v) || 0;
+    if (column) {
+      return n(l.marginTop) + n(l.marginBottom) + n(r.marginTop) + n(r.marginBottom);
+    } else {
+      return n(l.marginLeft) + n(l.marginRight) + n(r.marginLeft) + n(r.marginRight);
+    }
+  }
 
-// Update resizer cursor on hover
-dragbar.addEventListener('mouseenter', () => {
-  if (!isResizing) {
+  function clamp(v, min, max) {
+    return Math.min(max, Math.max(min, v));
+  }
+
+  function applySplitRatio() {
+    const rect = container.getBoundingClientRect();
     const column = isColumnLayout();
-    dragbar.style.cursor = column ? "row-resize" : "col-resize";
+    const total = column ? rect.height : rect.width;
+    // A hidden mode-panel ([hidden] => display:none) measures 0 — skip
+    // rather than collapsing both panels to their minimum; refresh() gets
+    // called again once the mode becomes visible (see switchMode()).
+    if (total <= 0) return;
+    const margins = getAxisMarginsSum(column);
+    const usable = Math.max(0, total - RESIZER_SIZE - margins);
+    const minPrimary = column ? MIN_MOBILE : MIN_DESKTOP;
+
+    // Convert ratio -> pixels and clamp so both sides keep minimum size
+    const primaryPx = clamp(Math.round(usable * splitRatio), minPrimary, Math.max(minPrimary, usable - minPrimary));
+    const secondaryPx = Math.max(0, usable - primaryPx);
+
+    leftPanel.style.flex = `0 0 ${primaryPx}px`;
+    rightPanel.style.flex = `0 0 ${secondaryPx}px`;
   }
-});
 
-// Re-apply split on resize/orientation/flex-direction changes
-let resizeTimeout;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(() => {
+  function updateSplitFromPixels(primaryPx, totalUsable) {
+    splitRatio = clamp(primaryPx / Math.max(1, totalUsable), 0.1, 0.9);
+  }
+
+  // Small reset control on the bar itself so a 50/50 split is always one
+  // click away, instead of having to eyeball the drag back to center.
+  const resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.className = 'resizer-reset-btn';
+  resetBtn.title = 'Reset panel sizes';
+  resetBtn.setAttribute('aria-label', 'Reset panel sizes to 50/50');
+  resetBtn.innerHTML = '<i class="fa-solid fa-rotate-left" aria-hidden="true"></i>';
+  dragbar.appendChild(resetBtn);
+
+  function resetSplit(e) {
+    e.stopPropagation();
+    splitRatio = 0.5;
     applySplitRatio();
-  }, 100);
-});
+    if (typeof showNotification === 'function') showNotification('Panel sizes reset');
+  }
+  // Stop the drag-start handler below from firing when the click originates
+  // on the reset button (it lives inside the same dragbar element).
+  resetBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  resetBtn.addEventListener('click', resetSplit);
 
-// Initialize split once
-applySplitRatio();
+  dragbar.addEventListener('pointerdown', (e) => {
+    if (e.target.closest && e.target.closest('.resizer-reset-btn')) return;
+    e.preventDefault();
+    isResizing = true;
+    activePointerId = e.pointerId;
+    dragbar.setPointerCapture(activePointerId);
+    dragbar.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    const column = isColumnLayout();
+    document.body.style.cursor = column ? "row-resize" : "col-resize";
+    dragbar.style.cursor = column ? "row-resize" : "col-resize";
+    setIframeInteractive(false);
+  });
+
+  dragbar.addEventListener('pointermove', (e) => {
+    if (!isResizing) return;
+
+    const rect = container.getBoundingClientRect();
+    const column = isColumnLayout();
+    const total = column ? rect.height : rect.width;
+    const margins = getAxisMarginsSum(column);
+    const usable = Math.max(0, total - RESIZER_SIZE - margins);
+    const minPrimary = column ? MIN_MOBILE : MIN_DESKTOP;
+
+    const lpStyle = getComputedStyle(leftPanel);
+    const leadMargin = column
+      ? (Number.parseFloat(lpStyle.marginTop) || 0)
+      : (Number.parseFloat(lpStyle.marginLeft) || 0);
+
+    const pointer = column
+      ? (e.clientY - rect.top)
+      : (e.clientX - rect.left);
+
+    // Translate pointer position to primary panel inner size (exclude leading margin and half resizer)
+    let primaryPx = pointer - leadMargin - (RESIZER_SIZE / 2);
+    primaryPx = clamp(primaryPx, minPrimary, Math.max(minPrimary, usable - minPrimary));
+
+    const secondaryPx = Math.max(0, usable - primaryPx);
+
+    leftPanel.style.flex = `0 0 ${primaryPx}px`;
+    rightPanel.style.flex = `0 0 ${secondaryPx}px`;
+
+    updateSplitFromPixels(primaryPx, usable);
+  });
+
+  function stopResize() {
+    if (!isResizing) return;
+    isResizing = false;
+    if (activePointerId !== null && dragbar.releasePointerCapture) {
+      try { dragbar.releasePointerCapture(activePointerId); } catch (e) {}
+    }
+    activePointerId = null;
+    dragbar.classList.remove('dragging');
+    document.body.style.cursor = "";
+    dragbar.style.cursor = "";
+    document.body.style.userSelect = "";
+    setIframeInteractive(true);
+  }
+
+  dragbar.addEventListener('pointerup', stopResize);
+  dragbar.addEventListener('pointercancel', stopResize);
+  document.addEventListener('pointerup', stopResize);
+
+  // Update resizer cursor on hover
+  dragbar.addEventListener('mouseenter', () => {
+    if (!isResizing) {
+      const column = isColumnLayout();
+      dragbar.style.cursor = column ? "row-resize" : "col-resize";
+    }
+  });
+
+  // Re-apply split on resize/orientation/flex-direction changes
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(applySplitRatio, 100);
+  });
+
+  // Initialize split once
+  applySplitRatio();
+
+  return { refresh: applySplitRatio };
+}
+
+// Wire up the Web Project mode's resizer (its panels are static markup
+// already present in index.html by the time this file runs).
+const webResizerHandle = setupPanelResizer({
+  dragbar: document.getElementById('dragbar'),
+  leftPanel: document.getElementById('codePanel'),
+  rightPanel: document.getElementById('outputPanel'),
+  container: document.querySelector('#webModePanel .container')
+});
 
 // Dark/Light Mode Toggle
 const toggle = document.getElementById('darkModeToggle');
@@ -1517,8 +1551,6 @@ document.addEventListener('keydown', function(e) {
         toggleSimpleFindBar('findBarPy');
       } else if (currentMode === 'sql') {
         toggleSimpleFindBar('findBarSql');
-      } else if (currentMode === 'data') {
-        toggleSimpleFindBar('findBarData');
       } else {
         toggleFindReplace();
       }
@@ -1542,11 +1574,6 @@ document.addEventListener('keydown', function(e) {
     }
     if (currentMode === 'sql' && !document.getElementById('findBarSql').hidden) {
       const bar = document.getElementById('findBarSql');
-      if (bar._simpleFindClose) bar._simpleFindClose(); else bar.hidden = true;
-      return;
-    }
-    if (currentMode === 'data' && !document.getElementById('findBarData').hidden) {
-      const bar = document.getElementById('findBarData');
       if (bar._simpleFindClose) bar._simpleFindClose(); else bar.hidden = true;
       return;
     }
@@ -1609,14 +1636,12 @@ function setupAutoSave(textarea) {
     autoSaveTimer = setTimeout(() => {
       const pyEl = document.getElementById('python-code');
       const sqlEl = document.getElementById('sql-code');
-      const dataEl = document.getElementById('data-code');
       const autosave = {
         html: htmlCode.value,
         css: cssCode.value,
         js: jsCode.value,
         python: pyEl ? pyEl.value : undefined,
         sql: sqlEl ? sqlEl.value : undefined,
-        data: dataEl ? dataEl.value : undefined,
         ts: Date.now()
       };
       localStorage.setItem('autosave', JSON.stringify(autosave));
@@ -1631,7 +1656,6 @@ setupAutoSave(cssCode);
 setupAutoSave(jsCode);
 if (document.getElementById('python-code')) setupAutoSave(document.getElementById('python-code'));
 if (document.getElementById('sql-code')) setupAutoSave(document.getElementById('sql-code'));
-if (document.getElementById('data-code')) setupAutoSave(document.getElementById('data-code'));
 
 // Restore saved code on page load
 window.addEventListener('load', function() {
@@ -1645,10 +1669,8 @@ window.addEventListener('load', function() {
         jsCode.value  = saved.js  ?? jsCode.value;
         const pyEl = document.getElementById('python-code');
         const sqlEl = document.getElementById('sql-code');
-        const dataEl = document.getElementById('data-code');
         if (pyEl && saved.python !== undefined) { pyEl.value = saved.python; pyEditorHandle && pyEditorHandle.refresh(); }
         if (sqlEl && saved.sql !== undefined) { sqlEl.value = saved.sql; sqlEditorHandle && sqlEditorHandle.refresh(); }
-        if (dataEl && saved.data !== undefined) { dataEl.value = saved.data; dataEditorHandle && dataEditorHandle.refresh(); }
       }
     } catch (_) {}
   }
@@ -1814,14 +1836,15 @@ function switchMode(mode) {
   document.getElementById('webModePanel').classList.toggle('active', mode === 'web');
   document.getElementById('pythonModePanel').hidden = mode !== 'python';
   document.getElementById('sqlModePanel').hidden = mode !== 'sql';
-  document.getElementById('dataModePanel').hidden = mode !== 'data';
 
   if (mode === 'python' && typeof onPythonModeActivated === 'function') {
     onPythonModeActivated();
   } else if (mode === 'sql' && typeof onSqlModeActivated === 'function') {
     onSqlModeActivated();
-  } else if (mode === 'data' && typeof onDataModeActivated === 'function') {
-    onDataModeActivated();
+  } else if (mode === 'web') {
+    // Panel widths measured 0 (and were skipped) if the window was resized
+    // while this mode was hidden — re-sync now that it's visible again.
+    webResizerHandle && webResizerHandle.refresh();
   }
 }
 
@@ -1838,7 +1861,7 @@ function toggleSimpleFindBar(barId) {
   if (!bar) return;
   const isHidden = bar.hidden;
   // Close the other simple find bars + the web-mode find/replace bar so only one is open at a time
-  ['findBarPy', 'findBarSql', 'findBarData'].forEach(id => {
+  ['findBarPy', 'findBarSql'].forEach(id => {
     if (id !== barId) {
       const other = document.getElementById(id);
       if (other) {
@@ -1858,8 +1881,7 @@ function toggleSimpleFindBar(barId) {
   bar.hidden = false;
   const input = bar.querySelector('.find-input');
   const textarea = barId === 'findBarPy' ? document.getElementById('python-code')
-    : barId === 'findBarSql' ? document.getElementById('sql-code')
-    : document.getElementById('data-code');
+    : document.getElementById('sql-code');
   if (!textarea) return;
   const selected = textarea.value.slice(textarea.selectionStart, textarea.selectionEnd);
   if (selected) input.value = selected;

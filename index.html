@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0f172a">
-  <title>OnCodeEditor | HTML/CSS/JS Editor</title>
+  <title>Code Editor</title>
   <link rel="stylesheet" href="styles.css">
   <!-- Font Awesome (you can bundle this locally for offline) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -16,7 +16,7 @@
     <div class="header-left">
       <div class="logo" style="text-decoration: none; color: inherit;">
         <i class="fa-solid fa-code logo-icon" aria-hidden="true"></i>
-        <span>OnCodeEditor</span>
+        <span>Code Editor</span>
       </div>
 
       <!-- Mode Switcher -->
@@ -30,12 +30,14 @@
         <button class="mode-tab" data-mode="sql" role="tab" aria-selected="false" type="button">
           <i class="fa-solid fa-database" aria-hidden="true"></i><span class="mode-label">SQL</span>
         </button>
-        <button class="mode-tab" data-mode="data" role="tab" aria-selected="false" type="button">
-          <i class="fa-solid fa-chart-line" aria-hidden="true"></i><span class="mode-label">Data</span>
-        </button>
       </div>
 
-      <!-- Project Name Display -->
+    </div>
+
+    <!-- Project Name Display — its own flexible section so it centers in
+         the space between the mode tabs and the header controls, rather
+         than hugging the tabs. -->
+    <div class="header-center">
       <div class="project-title">
         <i class="fa-solid fa-folder-open" style="margin-right: 8px;"></i>
         <span id="projectTitle">Untitled Project</span>
@@ -211,7 +213,7 @@ console.log('Hello from JavaScript!');"></textarea>
     </div>
     <!-- ===== END WEB PROJECT MODE ===== -->
 
-    <!-- ===== PYTHON MODE ===== -->
+    <!-- ===== PYTHON MODE (general Python + data analysis, merged) ===== -->
     <div class="mode-panel" id="pythonModePanel" hidden></div>
     <!-- Markup for this panel is injected by pyeditor.js -->
     <!-- ===== END PYTHON MODE ===== -->
@@ -220,11 +222,6 @@ console.log('Hello from JavaScript!');"></textarea>
     <div class="mode-panel" id="sqlModePanel" hidden></div>
     <!-- Markup for this panel is injected by sqleditor.js -->
     <!-- ===== END SQL MODE ===== -->
-
-    <!-- ===== DATA ANALYSIS MODE ===== -->
-    <div class="mode-panel" id="dataModePanel" hidden></div>
-    <!-- Markup for this panel is injected by dataeditor.js -->
-    <!-- ===== END DATA ANALYSIS MODE ===== -->
 
   </div>
 
@@ -262,7 +259,7 @@ console.log('Hello from JavaScript!');"></textarea>
       <div class="modal-body">
         <div class="shortcuts-grid">
           <div class="shortcut-row"><span>Save project</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>S</kbd></span></div>
-          <div class="shortcut-row"><span>Run Python / SQL / Data</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span></div>
+          <div class="shortcut-row"><span>Run Python / SQL</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span></div>
           <div class="shortcut-row"><span>Find &amp; Replace</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>F</kbd></span></div>
           <div class="shortcut-row"><span>Indent selection</span><span class="shortcut-keys"><kbd>Tab</kbd></span></div>
           <div class="shortcut-row"><span>Next tab / editor</span><span class="shortcut-keys"><kbd>Ctrl</kbd>+<kbd>Tab</kbd></span></div>
@@ -277,6 +274,5 @@ console.log('Hello from JavaScript!');"></textarea>
   <script src="script.js"></script>
   <script src="pyeditor.js"></script>
   <script src="sqleditor.js"></script>
-  <script src="dataeditor.js"></script>
 </body>
 </html>

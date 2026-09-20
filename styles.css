@@ -6,6 +6,16 @@
       /* Removed heavy global transition to avoid jank */
     }
 
+    /* Lock the page itself to the viewport height so nothing but the
+       designated inner regions (code editor, output/console areas) ever
+       scrolls. Without this, typing enough code to overflow a panel makes
+       the *whole window* scroll instead of just that panel's textarea —
+       which drags the top bars and the status bar out of view with it. */
+    html {
+      height: 100%;
+      scrollbar-width: thin; /* Firefox */
+    }
+
     /* CSS Variables for consistent theming */
     :root {
       --primary-color: #3b82f6;
@@ -32,7 +42,9 @@
     body {
       background-color: var(--bg-dark);
       color: var(--text-dark);
-      min-height: 100vh;
+      height: 100vh;   /* fallback for browsers without dvh support */
+      height: 100dvh;  /* accounts for mobile browser/webview chrome */
+      overflow: hidden; /* the page itself never scrolls — see note above */
       display: flex;
       flex-direction: column;
     }
@@ -54,7 +66,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between; /* keep left-right alignment */
-      border-bottom: 2px solid var(--primary-color);
+      border-bottom: 1px solid var(--border-dark);
       box-shadow: var(--shadow);
       position: sticky;
       top: 0;
@@ -77,6 +89,16 @@
     .header-right {
       margin-left: auto; /* ensure right alignment */
       flex: 0 0 auto;
+    }
+
+    /* Fills the space between the mode tabs (header-left) and the header
+       controls (header-right), centering the project-title pill within it. */
+    .header-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
     .logo {
@@ -150,8 +172,6 @@
     .mode-tab[data-mode="python"].active i { color: #ffe873; }
     .mode-tab[data-mode="sql"] i { color: #4fc3f7; }
     .mode-tab[data-mode="sql"].active i { color: white; }
-    .mode-tab[data-mode="data"] i { color: #a78bfa; }
-    .mode-tab[data-mode="data"].active i { color: white; }
 
     .controls {
       display: flex;
@@ -546,6 +566,51 @@
       cursor: inherit;
     }
 
+    /* Small "reset to 50/50" button that floats on the resizer bar, near
+       its bottom end. Sized well above the 4px-wide bar itself so it's
+       comfortably clickable/tappable. */
+    .resizer-reset-btn {
+      position: absolute;
+      left: 50%;
+      bottom: -27px; /* sits at the end of the resizer, inside the status-bar footer */
+      transform: translate(-50%, 0);
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid var(--border-dark);
+      background: var(--bg-tertiary-dark);
+      color: var(--text-secondary-dark);
+      font-size: 10px;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 2;
+      transition: all 0.15s ease;
+    }
+
+    .resizer-reset-btn:hover {
+      background: var(--primary-color);
+      color: #fff;
+      border-color: var(--primary-color);
+      transform: translate(-50%, 0) scale(1.08);
+    }
+
+    /* On narrow layouts the resizer becomes a thin horizontal bar stacked
+       between the two panels (not adjacent to the footer), so keep the
+       button centered on the bar itself instead of dropping into the footer. */
+    @media (max-width: 768px) {
+      .resizer-reset-btn {
+        bottom: auto;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .resizer-reset-btn:hover {
+        transform: translate(-50%, -50%) scale(1.08);
+      }
+    }
+
     /* Status Bar */
     .status-bar {
       background-color: var(--bg-tertiary-dark);
@@ -559,10 +624,23 @@
       flex-shrink: 0;
     }
 
+    /* .status-left / .status-right group the status-bar's items (Lines,
+       Characters, engine status, etc.) — without this they were plain
+       block <div>s, so their .status-item children stacked on separate
+       lines and made the footer twice as tall as it needed to be. */
+    .status-left,
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
     .status-item {
       display: flex;
       align-items: center;
       gap: 4px;
+      white-space: nowrap;
     }
 
     /* Loading State */
@@ -1083,10 +1161,6 @@
       background: var(--primary-color);
     }
 
-    html {
-      scrollbar-width: thin; /* Firefox */
-    }
-
     /* Focus states for accessibility */
     button:focus,
     .editor:focus,
@@ -1141,7 +1215,6 @@
       color: var(--text-secondary-dark);
       font-size: 14px;
       font-weight: 500;
-      margin-left: 12px;
     }
 
     .unsaved-dot {
@@ -1664,6 +1737,7 @@
 
     /* Mobile Responsive */
     @media (max-width: 768px) {
+      .header-center,
       .project-title {
         display: none;
       }
